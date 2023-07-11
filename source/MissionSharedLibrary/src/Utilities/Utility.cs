@@ -164,10 +164,11 @@ namespace MissionSharedLibrary.Utilities
             agent.Formation = formation;
         }
 
-        public static void SetPlayerFormationClass(FormationClass formationClass)
+        public static void SetMainAgentFormationClass(FormationClass formationClass)
         {
             if (formationClass < 0 || formationClass >= FormationClass.NumberOfAllFormations)
                 return;
+
             var mission = Mission.Current;
             if (mission.MainAgent != null && IsTeamValid(mission.PlayerTeam))
             {
@@ -177,6 +178,7 @@ namespace MissionSharedLibrary.Utilities
                     var formation = mission.PlayerTeam.GetFormation(formationClass);
                     if (formation == null)
                         return;
+
                     if (formation.CountOfUnits == 0)
                     {
                         // If the formation is controlled by AI, the player may be transferred to another formation.
@@ -193,19 +195,20 @@ namespace MissionSharedLibrary.Utilities
                         else
                         {
                             // copied from Formation.CopyOrdersFrom
-                            formation.SetMovementOrder(originalFormation.GetReadonlyMovementOrderReference());
                             formation.FormOrder = originalFormation.FormOrder;
-                            formation.SetPositioning(unitSpacing: originalFormation.UnitSpacing);
+                            formation.SetPositioning(GetOrderPosition(formation), formation.Direction, originalFormation.UnitSpacing);
                             formation.RidingOrder = originalFormation.RidingOrder;
-                            formation.WeaponUsageOrder = originalFormation.WeaponUsageOrder;
                             formation.FiringOrder = originalFormation.FiringOrder;
-                            formation.SetControlledByAI(originalFormation.IsAIControlled || !originalFormation.Team.IsPlayerGeneral, originalFormation.IsSplittableByAI);
-                            formation.AI.Side = originalFormation.AI.Side;
+                            formation.SetControlledByAI(originalFormation.IsAIControlled || !originalFormation.Team.IsPlayerGeneral);
+                            if (originalFormation.AI.Side != FormationAI.BehaviorSide.BehaviorSideNotSet)
+                            {
+                                formation.AI.Side = originalFormation.AI.Side;
+                            }
+
                             formation.SetMovementOrder(originalFormation.GetReadonlyMovementOrderReference());
+                            formation.SetTargetFormation(originalFormation.TargetFormation);
                             formation.FacingOrder = originalFormation.FacingOrder;
                             formation.ArrangementOrder = originalFormation.ArrangementOrder;
-
-                            formation.SetPositioning(GetOrderPosition(formation), formation.Direction, formation.UnitSpacing);
                         }
                     }
 
@@ -331,14 +334,11 @@ namespace MissionSharedLibrary.Utilities
                         mission.MainAgent.RemoveComponent(mission.MainAgent.HumanAIComponent);
                     }
 
-                    mission.MainAgent.Formation = mission.MainAgent.Team.GetFormation(mission.MainAgent.Character.GetFormationClass());
+                    var formation_to_put_in = mission.MainAgent.Team.GetFormation(mission.MainAgent.Character.GetFormationClass());
+
                     mission.MainAgent.Controller = Agent.ControllerType.AI;
-                    // Note that the formation may be already set by SwitchFreeCameraLogic
-                    if (mission.MainAgent.Formation == null)
-                    {
-                        SetAgentFormation(mission.MainAgent, formation);
-                        SetHasPlayer(formation, false);
-                    }
+                    SetMainAgentFormationClass(formation_to_put_in.FormationIndex);
+
                     // the Initialize method need to be called manually.
                     mission.MainAgent.CommonAIComponent?.Initialize();
 
@@ -349,7 +349,7 @@ namespace MissionSharedLibrary.Utilities
                     mission.MainAgent.InvalidateAIWeaponSelections();
                     if (mission.MainAgent.Formation != null)
                     {
-                        mission.MainAgent.SetRidingOrder((int)mission.MainAgent.Formation.RidingOrder.OrderEnum);
+                        mission.MainAgent.SetRidingOrder(mission.MainAgent.Formation.RidingOrder.OrderEnum);
                     }
                     if (changeAlarmed)
                     {
