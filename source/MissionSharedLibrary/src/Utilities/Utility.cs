@@ -207,7 +207,7 @@ namespace MissionSharedLibrary.Utilities
                             }
 
                             formation.SetMovementOrder(originalFormation.GetReadonlyMovementOrderReference());
-                            formation.SetTargetFormation(originalFormation.TargetFormation);
+                            formation.TargetFormation = originalFormation.TargetFormation;
                             formation.FacingOrder = originalFormation.FacingOrder;
                             formation.ArrangementOrder = originalFormation.ArrangementOrder;
                         }
@@ -350,7 +350,7 @@ namespace MissionSharedLibrary.Utilities
                     mission.MainAgent.InvalidateAIWeaponSelections();
                     if (mission.MainAgent.Formation != null)
                     {
-                        mission.MainAgent.SetRidingOrder(mission.MainAgent.Formation.RidingOrder.OrderEnum);
+                        mission.MainAgent.SetRidingOrder((int)mission.MainAgent.Formation.RidingOrder.OrderEnum);
                     }
                     if (changeAlarmed)
                     {
@@ -614,7 +614,7 @@ namespace MissionSharedLibrary.Utilities
             var formationNames = new List<TextObject>();
             foreach (var formation in selectedFormations)
             {
-                formationNames.Add(GameTexts.FindText("str_formation_class_string", formation.LogicalClass.GetName()));
+                formationNames.Add(GameTexts.FindText("str_formation_class_string", formation.PrimaryClass.GetName()));
             }
 
             if (!formationNames.IsEmpty())
