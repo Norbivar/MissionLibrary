@@ -1,5 +1,6 @@
 ﻿using MissionSharedLibrary.HotKey.Category;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.AgentOrigins;
@@ -603,6 +604,30 @@ namespace MissionSharedLibrary.Utilities
             {
                 Key defaultKeyboardKey = gameKey.DefaultKeyboardKey;
                 keyboardKey.ChangeKey(defaultKeyboardKey?.InputKey ?? InputKey.Invalid);
+            }
+        }
+
+        public static void DisplayChargeToFormationMessage(MBReadOnlyList<Formation> selectedFormations,
+            Formation targetFormation)
+        {
+            // From MissionOrderVM.OnOrder
+            var formationNames = new List<TextObject>();
+            foreach (var formation in selectedFormations)
+            {
+                formationNames.Add(GameTexts.FindText("str_formation_class_string", formation.LogicalClass.GetName()));
+            }
+
+            if (!formationNames.IsEmpty())
+            {
+                var message = new TextObject("{=ApD0xQXT}{STR1}: {STR2}");
+                message.SetTextVariable("STR1", GameTexts.GameTextHelper.MergeTextObjectsWithComma(formationNames, false));
+                message.SetTextVariable("STR2",
+                    GameTexts.FindText("str_formation_ai_sergeant_instruction_behavior_text",
+                            nameof(BehaviorTacticalCharge))
+                        .SetTextVariable("AI_SIDE", GameTexts.FindText("str_formation_ai_side_strings", targetFormation.AI.Side.ToString()))
+                        .SetTextVariable("CLASS", GameTexts.FindText("str_troop_group_name", ((int)targetFormation.FormationIndex).ToString())));
+
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
             }
         }
     }
