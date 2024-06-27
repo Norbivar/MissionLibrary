@@ -128,6 +128,7 @@ namespace MissionSharedLibrary.Utilities
             var mission = Mission.Current;
             if (!IsTeamValid(mission?.PlayerTeam))
                 return;
+
             mission.PlayerTeam.PlayerOrderController.Owner = mission.MainAgent;
             foreach (var formation in mission.PlayerTeam.FormationsIncludingEmpty)
             {
